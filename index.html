@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOMETASK 2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hammersmith+One&family=Inter:wght@400;500;600;700&family=Khula:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#1A1D2E;--card:#212832;--card2:#2C3347;--card3:#333d52;
+  --yellow:#FED36A;--white:#FFFFFF;
+  --muted:rgba(255,255,255,0.42);
+  --radius:12px;--radius-sm:8px;--radius-lg:18px;
+  --pending:#FFFFFF;--assigned:#3B82F6;--inprog:#F97316;--done:#22C55E;
+  --err:#EF4444;--warn:#D4611A;
+}
+html,body{height:100%;background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;}
+
+/* LAYOUT */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topnav{background:var(--yellow);display:flex;align-items:center;padding:0 2rem;height:62px;flex-shrink:0;}
+.logo{font-family:'Hammersmith One',sans-serif;font-size:20px;color:#1A1D2E;}
+.nav-links{display:flex;gap:2rem;margin-left:auto;align-items:center;}
+.nav-link{font-weight:600;font-size:13px;color:#1A1D2E;cursor:pointer;padding-bottom:3px;border-bottom:2.5px solid transparent;text-transform:uppercase;letter-spacing:.06em;user-select:none;}
+.nav-link.active{border-bottom-color:#1A1D2E;}
+.user-av{width:36px;height:36px;border-radius:50%;background:#fff;color:#1A1D2E;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;cursor:pointer;margin-left:.5rem;}
+.body-wrap{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:220px;background:var(--bg);padding:1.5rem 0;flex-shrink:0;border-right:1px solid rgba(255,255,255,.05);}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 1.5rem;cursor:pointer;color:var(--muted);font-size:14px;transition:color .15s,background .15s;user-select:none;}
+.sb-item::before{content:'●';font-size:9px;flex-shrink:0;}
+.sb-item:hover{color:var(--white);}
+.sb-item.active{color:var(--white);background:rgba(255,255,255,.06);}
+.main{flex:1;overflow-y:auto;padding:1.75rem 2rem;}
+
+/* INPUTS */
+input[type="text"],input[type="date"],input[type="time"],textarea,select{
+  background:var(--card);border:1.5px solid transparent;border-radius:var(--radius-sm);
+  color:var(--white);padding:10px 13px;font-family:'Inter',sans-serif;font-size:14px;
+  width:100%;outline:none;transition:border-color .15s;
+}
+input[type="text"]::placeholder,textarea::placeholder{color:var(--muted);}
+input[type="text"]:focus,input[type="date"]:focus,input[type="time"]:focus,textarea:focus,select:focus{border-color:var(--yellow);}
+textarea{resize:vertical;min-height:72px;}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+select option{background:var(--card);}
+
+/* LABELS */
+.flabel{font-family:'Khula',sans-serif;font-weight:700;font-size:14px;color:var(--yellow);margin-bottom:5px;display:block;}
+
+/* BUTTONS */
+.btn-yellow{background:var(--yellow);color:#1A1D2E;border:none;border-radius:var(--radius-sm);padding:11px 20px;font-family:'Khula',sans-serif;font-weight:700;font-size:15px;cursor:pointer;width:100%;transition:opacity .15s,transform .1s;}
+.btn-yellow:hover{opacity:.88;}
+.btn-yellow:active{transform:scale(.98);}
+.btn-ghost{background:transparent;color:var(--yellow);border:none;cursor:pointer;font-size:13px;padding:0;display:inline-flex;align-items:center;gap:5px;}
+.btn-ghost:hover{opacity:.75;}
+.btn-sm-yellow{background:var(--yellow);color:#1A1D2E;border:none;border-radius:var(--radius-sm);padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Khula',sans-serif;}
+.btn-sm-yellow:hover{opacity:.85;}
+.filter-btn{width:40px;height:40px;background:var(--yellow);border:none;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;}
+
+/* STATUS DOTS */
+.dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.dp{background:var(--pending);}
+.da{background:var(--assigned);}
+.di{background:var(--inprog);}
+.dd{background:var(--done);}
+
+/* BADGES */
+.badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;white-space:nowrap;}
+.bp{background:rgba(255,255,255,.12);color:#fff;}
+.ba{background:rgba(59,130,246,.2);color:#93C5FD;}
+.bi{background:rgba(249,115,22,.2);color:#FCA97A;}
+.bd{background:rgba(34,197,94,.2);color:#86EFAC;}
+
+/* AVATARS */
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;user-select:none;}
+.avatar-sm{width:26px;height:26px;font-size:9px;}
+.avatar-lg{width:44px;height:44px;font-size:14px;}
+
+/* SEARCH */
+.search-wrap{position:relative;flex:1;}
+.search-wrap input{padding-left:36px;height:40px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;pointer-events:none;}
+
+/* ══════════════════════════════
+   FIGMA MODALS
+══════════════════════════════ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+.overlay.open{display:flex;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+.fmodal{background:var(--card);border:1px solid rgba(255,255,255,.13);border-radius:var(--radius-lg);padding:2rem 1.75rem 1.75rem;width:90%;max-width:400px;text-align:center;animation:popIn .25s cubic-bezier(.34,1.56,.64,1);}
+@keyframes popIn{from{opacity:0;transform:scale(.88);}to{opacity:1;transform:scale(1);}}
+
+.fmodal-icon{width:64px;height:64px;border-radius:50%;margin:0 auto 1.25rem;display:flex;align-items:center;justify-content:center;}
+.fmodal-icon.success{background:#22C55E;}
+.fmodal-icon.success::after{content:'✓';color:#fff;font-size:26px;font-weight:700;}
+.fmodal-icon.warning{background:var(--yellow);}
+.fmodal-icon.warning::after{content:'!';color:#1A1D2E;font-size:28px;font-family:'Khula',sans-serif;font-weight:700;}
+.fmodal-icon.danger{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.15);}
+.fmodal-icon.danger::after{content:'!';color:var(--warn);font-size:28px;font-family:'Khula',sans-serif;font-weight:700;}
+
+.fmodal-title{font-weight:700;font-size:20px;line-height:1.25;margin-bottom:10px;color:#fff;}
+.fmodal-title.warn{color:var(--warn);}
+.fmodal-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:1.5rem;max-width:280px;margin-left:auto;margin-right:auto;}
+
+.fmodal-btn{width:100%;padding:12px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;font-size:14px;font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;transition:background .15s;margin-top:6px;}
+.fmodal-btn:hover{background:rgba(255,255,255,.13);}
+.fmodal-btns{display:flex;gap:10px;margin-top:6px;}
+.fmodal-btns .fmodal-btn{margin-top:0;}
+.fmodal-btn-red{background:#DC2626;border-color:#DC2626;color:#fff;}
+.fmodal-btn-red:hover{background:#B91C1C;border-color:#B91C1C;}
+
+.fmodal-input-wrap{margin-bottom:1rem;text-align:left;}
+.fmodal-input-wrap input{border:1.5px solid rgba(255,255,255,.15);}
+.fmodal-input-wrap input:focus{border-color:var(--yellow);}
+.ferr-inline{color:var(--err);font-size:12px;margin-top:4px;display:none;}
+.ferr-inline.show{display:block;}
+
+/* KANBAN */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;}
+.kcol{background:var(--card);border-radius:var(--radius);padding:1rem;display:flex;flex-direction:column;gap:8px;min-height:300px;}
+.kcol-head{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin-bottom:4px;}
+.ktask{background:var(--card2);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:background .15s;}
+.ktask:hover{background:var(--card3);}
+.ktask-name{font-size:13px;font-weight:500;}
+.ktask-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* TWO PANEL */
+.two-panel{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.panel-l{border-right:1px solid rgba(255,255,255,.06);padding-right:2rem;}
+.panel-r{padding-left:2rem;}
+
+/* TASK LIST */
+.titem{background:var(--card);border-radius:var(--radius-sm);padding:9px 12px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.titem-icon{width:32px;height:32px;background:var(--card2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.titem-name{flex:1;font-size:13px;font-weight:500;}
+
+/* MEMBER LIST */
+.mitem{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;}
+.mitem:hover .mitem-name,.mitem.active .mitem-name{color:var(--yellow);}
+.mitem.active .mitem-name{font-weight:600;}
+.mitem-name{flex:1;font-size:14px;transition:color .15s;}
+.mitem-time{font-size:11px;color:var(--muted);text-align:center;}
+.mitem-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);margin:3px auto 0;}
+
+/* ASSIGNED TASKS */
+.aitem{background:var(--card2);border-radius:var(--radius-sm);padding:10px 13px;display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.aitem-info{flex:1;}
+.aitem-name{font-size:13px;font-weight:600;}
+.aitem-sub{font-size:11px;color:var(--muted);}
+
+/* CREAR HOGAR */
+.hogar-split{display:grid;grid-template-columns:300px 1fr;min-height:100%;}
+.hogar-left{background:#E2E2DE;padding:3rem 2rem;display:flex;flex-direction:column;gap:1rem;}
+.hogar-left h2{font-family:'Hammersmith One',sans-serif;font-size:30px;color:#1A1D2E;line-height:1.2;}
+.hogar-left p{color:#666;font-size:14px;line-height:1.6;}
+.hogar-right{background:var(--bg);padding:2rem 3rem;display:flex;flex-direction:column;}
+
+/* MEMBER TAGS */
+.mtag{display:inline-flex;align-items:center;gap:6px;background:var(--card);border-radius:20px;padding:4px 8px 4px 4px;font-size:12px;}
+.mtag-rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;line-height:1;padding:0;}
+.mtag-rm:hover{color:#fff;}
+.btn-add-m{width:36px;height:36px;background:var(--yellow);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:#1A1D2E;font-weight:700;flex-shrink:0;}
+
+/* MEMBER CARDS */
+.mcard{background:var(--card);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.mcard-info{flex:1;}
+.mcard-name{font-size:14px;font-weight:500;}
+.mcard-role{font-size:11px;color:var(--muted);}
+.mcard-rm{background:none;border:1px solid rgba(255,255,255,.15);color:var(--muted);border-radius:var(--radius-sm);padding:4px 10px;font-size:11px;cursor:pointer;}
+.mcard-rm:hover{color:var(--err);border-color:var(--err);}
+
+/* IMAGE UPLOAD */
+.img-field{display:flex;align-items:center;background:var(--card);border:1.5px solid transparent;border-radius:var(--radius-sm);padding:9px 13px;gap:10px;cursor:pointer;transition:border-color .15s;}
+.img-field:hover{border-color:rgba(255,255,255,.2);}
+.img-icon{width:30px;height:30px;background:var(--yellow);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+.img-text{color:var(--muted);font-size:13px;flex:1;}
+.img-text.has{color:#fff;}
+
+/* MISC */
+.section-title{font-family:'Khula',sans-serif;font-weight:700;font-size:11px;color:var(--yellow);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1rem;}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:1.5rem 0;}
+.ht-chip{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:var(--radius-sm);padding:7px 12px;flex:1;}
+.ht-chip-label{font-size:10px;color:var(--muted);}
+.ht-chip-val{font-size:13px;font-weight:500;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+@media(max-width:960px){
+  .kanban{grid-template-columns:repeat(2,1fr);}
+  .two-panel{grid-template-columns:1fr;}
+  .panel-l{border-right:none;padding-right:0;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:2rem;margin-bottom:2rem;}
+  .panel-r{padding-left:0;}
+  .hogar-split{grid-template-columns:1fr;}
+  .hogar-left{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- MODAL GENÉRICO FIGMA -->
+<div class="overlay" id="fmodal-overlay">
+  <div class="fmodal">
+    <div class="fmodal-icon" id="fm-icon"></div>
+    <div class="fmodal-title" id="fm-title"></div>
+    <div class="fmodal-sub" id="fm-sub"></div>
+    <div id="fm-actions"></div>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR MIEMBRO -->
+<div class="overlay" id="modal-member">
+  <div class="fmodal" style="text-align:left;">
+    <h3 style="font-size:16px;font-weight:600;margin-bottom:1rem;">Agregar miembro</h3>
+    <div class="fmodal-input-wrap">
+      <input type="text" id="modal-member-input" placeholder="Nombre del miembro...">
+      <div class="ferr-inline" id="modal-member-err">El nombre es obligatorio.</div>
+    </div>
+    <div class="fmodal-btns">
+      <button class="fmodal-btn" onclick="closeModal('modal-member')">Cancelar</button>
+      <button class="fmodal-btn" style="background:var(--yellow);border-color:var(--yellow);color:#1A1D2E;font-weight:600;" onclick="confirmAddMember()">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+  <nav class="topnav" id="topnav" style="display:none;">
+    <span class="logo">HOMETASK</span>
+    <div class="nav-links">
+      <span class="nav-link" id="nl-inicio" onclick="go('inicio')">Inicio</span>
+      <span class="nav-link" id="nl-tareas" onclick="go('tareas')">Tareas</span>
+      <span class="nav-link" id="nl-miembros" onclick="go('miembros')">Miembros</span>
+      <div class="user-av">DL</div>
+    </div>
+  </nav>
+  <div class="body-wrap">
+    <aside class="sidebar" id="sidebar" style="display:none;">
+      <div class="sb-item" id="sb-inicio"    onclick="go('inicio')">Inicio</div>
+      <div class="sb-item" id="sb-tareas"    onclick="go('tareas')">Mis tareas</div>
+      <div class="sb-item" id="sb-asignar"   onclick="go('asignar')">Asignar</div>
+      <div class="sb-item" id="sb-miembros"  onclick="go('miembros')">Miembros</div>
+    </aside>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// MODAL ENGINE
+// ═══════════════════════════════════════
+function showModal(cfg){
+  const icon    = document.getElementById('fm-icon');
+  const title   = document.getElementById('fm-title');
+  const sub     = document.getElementById('fm-sub');
+  const actions = document.getElementById('fm-actions');
+
+  icon.className  = 'fmodal-icon ' + (cfg.type || 'warning');
+  title.textContent = cfg.title || '';
+  title.className   = 'fmodal-title' + (cfg.warn ? ' warn' : '');
+  sub.textContent   = cfg.sub || '';
+
+  if(cfg.buttons && cfg.buttons.length > 1){
+    const row = document.createElement('div');
+    row.className = 'fmodal-btns';
+    cfg.buttons.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'fmodal-btn' + (b.red ? ' fmodal-btn-red' : '');
+      btn.textContent = b.label;
+      btn.onclick = () => { closeModal('fmodal-overlay'); if(b.cb) b.cb(); };
+      row.appendChild(btn);
+    });
+    actions.innerHTML = '';
+    actions.appendChild(row);
+  } else {
+    const b = (cfg.buttons && cfg.buttons[0]) || { label: 'Entendido' };
+    actions.innerHTML = `<button class="fmodal-btn">${b.label}</button>`;
+    actions.querySelector('button').onclick = () => {
+      closeModal('fmodal-overlay');
+      if(b.cb) b.cb();
+    };
+  }
+  openModal('fmodal-overlay');
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// Cerrar modal al hacer clic en el overlay
+document.getElementById('fmodal-overlay').addEventListener('click', e => {
+  if(e.target === document.getElementById('fmodal-overlay')) closeModal('fmodal-overlay');
+});
+
+// ═══════════════════════════════════════
+// CONSTANTES Y ESTADO
+// ═══════════════════════════════════════
+const AV_COLORS = [
+  {bg:'#7B6CDD',fg:'#fff'},{bg:'#45C4A0',fg:'#fff'},{bg:'#BEA27A',fg:'#fff'},
+  {bg:'#E07878',fg:'#fff'},{bg:'#A07EE0',fg:'#fff'},{bg:'#E07AB0',fg:'#fff'},
+  {bg:'#6AAEE0',fg:'#fff'},{bg:'#5CC46A',fg:'#fff'},{bg:'#E0B06A',fg:'#1A1D2E'},
+];
+const DIF_SCORE = { Alta:3, Media:2, Baja:1 };
+const ICONS = {
+  barrer:'🧹', lavar:'🧺', limpiar:'🧽', cocinar:'🍳', comprar:'🛒',
+  bañar:'🐶', planchar:'👕', regar:'🌱', aspirar:'💨', organizar:'📦',
+};
+function taskIcon(t){
+  if(t.imgData) return `<img src="${t.imgData}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">`;
+  const low = (t.nombre||'').toLowerCase();
+  for(const [k,v] of Object.entries(ICONS)) if(low.includes(k)) return `<div class="titem-icon">${v}</div>`;
+  return `<div class="titem-icon">✔</div>`;
+}
+function badgeClass(e){ return {Pendiente:'bp',Asignada:'ba','En proceso':'bi',Finalizada:'bd'}[e]||'bp'; }
+function getWeek(){
+  const d=new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate()+3-(d.getDay()+6)%7);
+  const w1=new Date(d.getFullYear(),0,4);
+  return 100*d.getFullYear()+Math.round(((d-w1)/864e5-3+(w1.getDay()+6)%7)/7);
+}
+
+let S = { page:'hogar', hogar:null, miembros:[], tareas:[], colorIdx:0, lastWeek:null, selMiembro:null, searchQ:'' };
+let _imgData = null;
+
+function save(){ try{ localStorage.setItem('ht2',JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{
+    const d = localStorage.getItem('ht2');
+    if(d) Object.assign(S, JSON.parse(d));
+    if(S.hogar && S.page==='hogar') S.page='inicio';
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════
+function go(page){ S.page=page; save(); render(); }
+
+function render(){
+  const hasH = !!S.hogar;
+  document.getElementById('topnav').style.display  = hasH ? 'flex'  : 'none';
+  document.getElementById('sidebar').style.display = hasH ? 'block' : 'none';
+
+  if(hasH){
+    ['inicio','tareas','miembros'].forEach(id=>{
+      const el=document.getElementById('nl-'+id);
+      if(el) el.classList.toggle('active', S.page===id);
+    });
+    ['inicio','tareas','asignar','miembros'].forEach(id=>{
+      const el=document.getElementById('sb-'+id);
+      if(el) el.classList.toggle('active', S.page===id);
+    });
+  }
+
+  const pages = { hogar:pgHogar, inicio:pgInicio, tareas:pgTareas, asignar:pgAsignar, miembros:pgMiembros };
+  document.getElementById('main').innerHTML = (pages[S.page]||pgInicio)();
+}
+
+// ═══════════════════════════════════════
+// PÁGINA: CREAR HOGAR
+// ═══════════════════════════════════════
+function pgHogar(){
+  const tags = S.miembros.map((m,i)=>`
+    <div class="mtag">
+      <div class="avatar avatar-sm" style="background:${m.c.bg};color:${m.c.fg};">${m.ini}</div>
+      <span>${m.nombre}</span>
+      <button class="mtag-rm" onclick="rmTmpMember(${i})">×</button>
+    </div>`).join('');
+
+  return `
+  <div class="hogar-split">
+    <div class="hogar-left">
+      <div style="font-family:'Hammersmith One',sans-serif;font-size:18px;color:#1A1D2E;">HOMETASK</div>
+      <h2>Crea tu<br>Hogar</h2>
+      <p>Crea tu grupo familiar y empieza a repartir las tareas del hogar.</p>
+    </div>
+    <div class="hogar-right">
+      <h1 style="font-family:'Hammersmith One',sans-serif;font-size:28px;text-align:center;margin-bottom:4px;">Crear hogar</h1>
+      <p style="color:var(--muted);text-align:center;font-size:13px;margin-bottom:2rem;">Completa los datos para comenzar</p>
+
+      <div style="margin-bottom:1rem;">
+        <label class="flabel">Nombre del Hogar</label>
+        <input type="text" id="h-nombre" placeholder="Ingresa el nombre de tu hogar" maxlength="50">
+      </div>
+
+      <div style="margin-bottom:1.5rem;">
+        <label class="flabel">Descripción <span style="font-weight:400;color:var(--muted);font-size:12px;">(opcional)</span></label>
+        <textarea id="h-desc" placeholder="Agrega una descripción breve de tu hogar." rows="3"></textarea>
+      </div>
+
+      <div style="margin-bottom:2rem;">
+        <label class="flabel">Agregar miembros</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;" id="mtags-wrap">
+          ${tags}
+          <button class="btn-add-m" onclick="openAddMember()">+</button>
+        </div>
+        <p style="color:var(--muted);font-size:11px;margin-top:8px;">Serás asignado automáticamente como administrador.</p>
+      </div>
+
+      <button class="btn-yellow" onclick="crearHogar()">Crear Hogar</button>
+    </div>
+  </div>`;
+}
+
+function openAddMember(){
+  document.getElementById('modal-member-input').value = '';
+  document.getElementById('modal-member-err').classList.remove('show');
+  openModal('modal-member');
+  setTimeout(()=>document.getElementById('modal-member-input').focus(), 120);
+}
+
+function confirmAddMember(){
+  const v = document.getElementById('modal-member-input').value.trim();
+  if(!v){ document.getElementById('modal-member-err').classList.add('show'); return; }
+  const c = AV_COLORS[S.colorIdx % AV_COLORS.length]; S.colorIdx++;
+  const ini = v.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  S.miembros.push({ id:Date.now(), nombre:v, ini, c, rol:'Miembro' });
+  closeModal('modal-member');
+  render();
+}
+
+function rmTmpMember(i){ S.miembros.splice(i,1); render(); }
+
+document.getElementById('modal-member-input').addEventListener('keydown', e=>{
+  if(e.key==='Enter') confirmAddMember();
+  if(e.key==='Escape') closeModal('modal-member');
+});
+
+function crearHogar(){
+  if(S.hogar){
+    showModal({ type:'danger', warn:true, title:'Ya perteneces a un hogar',
+      sub:'No puedes crear otro hogar mientras perteneces a uno.',
+      buttons:[{ label:'Entendido' }] });
+    return;
+  }
+
+  const nombre = document.getElementById('h-nombre').value.trim();
+
+  if(!nombre){
+    showModal({ type:'warning', title:'Campo obligatorio',
+      sub:'El nombre del hogar es obligatorio para continuar.',
+      buttons:[{ label:'Entendido', cb:()=>document.getElementById('h-nombre').focus() }] });
+    return;
+  }
+  if(nombre.length < 3){
+    showModal({ type:'danger', warn:true, title:'Nombre no válido',
+      sub:'El nombre del hogar debe tener al menos 3 caracteres.',
+      buttons:[{ label:'Cancelar' },{ label:'Corregir', red:true, cb:()=>document.getElementById('h-nombre').focus() }] });
+    return;
+  }
+  if(nombre.length > 50){
+    showModal({ type:'danger', warn:true, title:'Nombre no válido',
+      sub:'El nombre del hogar no puede superar los 50 caracteres.',
+      buttons:[{ label:'Cancelar' },{ label:'Corregir', red:true, cb:()=>document.getElementById('h-nombre').focus() }] });
+    return;
+  }
+
+  const c = AV_COLORS[S.colorIdx % AV_COLORS.length]; S.colorIdx++;
+  S.miembros.unshift({ id:1, nombre:'Tú (Admin)', ini:'DL', c, rol:'Administrador' });
+  S.hogar = { nombre, descripcion: document.getElementById('h-desc').value.trim() };
+  save();
+
+  showModal({ type:'success', title:'Hogar creado exitosamente',
+    sub:'Ya puedes agregar tareas e invitar miembros a tu hogar.',
+    buttons:[{ label:'Continuar', cb:()=>go('inicio') }] });
+}
+
+// ═══════════════════════════════════════
+// PÁGINA: INICIO (Kanban)
+// ═══════════════════════════════════════
+function pgInicio(){
+  if(!S.hogar) return `<div class="empty" style="margin-top:4rem;"><p>No tienes un hogar aún.</p><br><button class="btn-yellow" style="max-width:200px;margin-top:1rem;" onclick="go('hogar')">Crear hogar</button></div>`;
+
+  const now = new Date();
+  const monthName = now.toLocaleDateString('es-ES',{month:'long'});
+  const pending = S.tareas.filter(t=>t.estado==='Pendiente').length;
+  const avs = S.miembros.slice(0,4).map(m=>`<div class="avatar" style="background:${m.c.bg};color:${m.c.fg};" title="${m.nombre}">${m.ini}</div>`).join('');
+  const more = S.miembros.length>4 ? `<div class="avatar" style="background:var(--card2);color:var(--muted);">+${S.miembros.length-4}</div>` : '';
+  const q = (S.searchQ||'').toLowerCase();
+
+  const cols = [
+    {key:'Pendiente',  cls:'dp'},
+    {key:'Asignada',   cls:'da'},
+    {key:'En proceso', cls:'di'},
+    {key:'Finalizada', cls:'dd'},
+  ];
+
+  const kanban = cols.map(col=>{
+    let tasks = S.tareas.filter(t=>t.estado===col.key);
+    if(q) tasks = tasks.filter(t=>t.nombre.toLowerCase().includes(q));
+    const cards = tasks.map(t=>`
+      <div class="ktask" onclick="cambiarEstado(${t.id})" title="Clic para avanzar estado">
+        <div class="ktask-name">${t.nombre}</div>
+        ${t.asignadoA ? `<div class="ktask-sub">${t.asignadoA} · ${t.dificultad}</div>` : t.prioridad ? `<div class="ktask-sub">Prioridad: ${t.prioridad}</div>` : ''}
+      </div>`).join('');
+    return `<div class="kcol">
+      <div class="kcol-head"><span class="dot ${col.cls}"></span>${col.key}</div>
+      ${cards||'<div class="empty" style="padding:.5rem 0;font-size:12px;">Sin tareas</div>'}
+    </div>`;
+  }).join('');
+
+  return `
+  <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;">
+      <h1 style="font-family:'Hammersmith One',sans-serif;font-size:24px;color:var(--yellow);">${S.hogar.nombre.toUpperCase()}</h1>
+      <p style="color:var(--muted);font-size:13px;">Semana del ${now.getDate()} de ${monthName} &nbsp;·&nbsp; <span style="color:#fff;font-weight:500;">${pending} pendiente${pending!==1?'s':''}</span></p>
+      <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
+        ${avs}${more}
+        <div class="avatar" style="background:transparent;border:1.5px dashed rgba(255,255,255,.25);color:var(--muted);cursor:pointer;" onclick="go('miembros')">+</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="search-wrap" style="width:200px;">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Buscar tarea..." value="${S.searchQ||''}" oninput="S.searchQ=this.value;render();" style="height:40px;">
+      </div>
+      <button class="filter-btn" onclick="go('tareas')">+</button>
+    </div>
+  </div>
+  <div class="section-title">Tareas esta semana</div>
+  <div class="kanban">${kanban}</div>
+  <p style="color:var(--muted);font-size:11px;margin-top:.75rem;">💡 Haz clic en una tarea para avanzar su estado.</p>`;
+}
+
+function cambiarEstado(id){
+  const t = S.tareas.find(t=>t.id===id); if(!t) return;
+  const order = ['Pendiente','Asignada','En proceso','Finalizada'];
+  t.estado = order[(order.indexOf(t.estado)+1) % order.length];
+  save(); render();
+}
+
+// ═══════════════════════════════════════
+// PÁGINA: TAREAS
+// ═══════════════════════════════════════
+function taskListHtml(filter){
+  const q = (filter||S.searchQ||'').toLowerCase();
+  const list = S.tareas.filter(t=>!q||t.nombre.toLowerCase().includes(q));
+  return list.length ? list.map(t=>`
+    <div class="titem">
+      ${taskIcon(t)}
+      <span class="titem-name">${t.nombre}</span>
+      <span class="badge ${badgeClass(t.estado)}" style="margin-right:6px;">${t.estado}</span>
+      <button class="btn-sm-yellow" onclick="eliminarTarea(${t.id})">Eliminar</button>
+    </div>`).join('')
+    : `<p class="empty">No hay tareas${q?' con ese nombre':' aún'}.</p>`;
+}
+
+function pgTareas(){
+  const now = new Date();
+  const duelabel = `${now.getDate()} ${now.toLocaleDateString('es-ES',{month:'long'})}`;
+  const avsMini = S.miembros.slice(0,3).map(m=>`<div class="avatar" style="width:20px;height:20px;font-size:8px;background:${m.c.bg};color:${m.c.fg};">${m.ini}</div>`).join('');
+
+  return `
+  <div class="two-panel">
+    <div class="panel-l">
+      <button class="btn-ghost" onclick="go('inicio')">← Volver</button>
+      <h2 style="font-family:'Hammersmith One',sans-serif;font-size:22px;margin:1rem 0 1.5rem;">Crear nueva tarea</h2>
+
+      <div style="margin-bottom:1rem;">
+        <label class="flabel">Nombre de la tarea</label>
+        <input type="text" id="t-nombre" placeholder="Ej: Barrer la casa">
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label class="flabel">Descripción <span style="font-weight:400;color:var(--muted);font-size:12px;">(opcional)</span></label>
+        <textarea id="t-desc" placeholder="Añade una descripción breve de la tarea." rows="3"></textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+        <div>
+          <label class="flabel">Dificultad</label>
+          <select id="t-dif">
+            <option value="">Seleccionar...</option>
+            <option>Baja</option><option selected>Media</option><option>Alta</option>
+          </select>
+        </div>
+        <div>
+          <label class="flabel">Prioridad</label>
+          <select id="t-pri">
+            <option value="">Seleccionar...</option>
+            <option>Baja</option><option>Media</option><option selected>Alta</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1rem;">
+        <label class="flabel">Fecha</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;background:var(--card);border-radius:var(--radius-sm);padding:8px 12px;">
+            <span>🕐</span>
+            <input type="time" id="t-hora" value="10:30" style="background:transparent;border:none;padding:0;flex:1;min-width:0;">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:var(--card);border-radius:var(--radius-sm);padding:8px 12px;" id="t-fecha-wrap">
+            <span>📅</span>
+            <input type="date" id="t-fecha" style="background:transparent;border:none;padding:0;flex:1;min-width:0;">
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem;">
+        <label class="flabel">Imagen <span style="font-weight:400;color:var(--muted);font-size:12px;">(solo JPG, opcional)</span></label>
+        <div class="img-field" id="img-area" onclick="document.getElementById('t-img').click()">
+          <input type="file" id="t-img" accept=".jpg,.jpeg" style="display:none;" onchange="onImgChange(this)">
+          <div class="img-icon" id="img-icon-wrap">🖼</div>
+          <span class="img-text" id="img-txt">Subir imagen JPG</span>
+        </div>
+      </div>
+
+      <button class="btn-yellow" onclick="crearTarea()">Crear Tarea</button>
+    </div>
+
+    <div class="panel-r">
+      <div style="display:flex;gap:10px;margin-bottom:1.25rem;align-items:center;">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Buscar Tarea" value="${S.searchQ||''}"
+            oninput="S.searchQ=this.value;document.getElementById('task-list').innerHTML=taskListHtml();" style="height:40px;">
+        </div>
+        <button class="filter-btn">≡</button>
+      </div>
+
+      <div style="display:flex;gap:1rem;margin-bottom:1.25rem;">
+        <div class="ht-chip">
+          <span style="font-size:18px;">📅</span>
+          <div><div class="ht-chip-label">Due Date</div><div class="ht-chip-val">${duelabel}</div></div>
+        </div>
+        <div class="ht-chip">
+          <span style="font-size:18px;">👥</span>
+          <div><div class="ht-chip-label">Mi hogar</div><div style="display:flex;gap:3px;margin-top:3px;">${avsMini}</div></div>
+        </div>
+      </div>
+
+      <div class="section-title">Todas las tareas</div>
+      <div id="task-list">${taskListHtml()}</div>
+    </div>
+  </div>`;
+}
+
+function onImgChange(inp){
+  const f = inp.files[0]; if(!f) return;
+  const ext = f.name.split('.').pop().toLowerCase();
+  if(ext!=='jpg' && ext!=='jpeg'){
+    showModal({ type:'warning', title:'Formato no permitido',
+      sub:'La imagen debe estar en formato JPG para poder subirla.',
+      buttons:[{ label:'Entendido' }] });
+    document.getElementById('img-area').style.borderColor = 'var(--err)';
+    document.getElementById('img-txt').textContent = 'Subir imagen JPG';
+    document.getElementById('img-txt').classList.remove('has');
+    _imgData = null; inp.value = ''; return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    _imgData = e.target.result;
+    document.getElementById('img-icon-wrap').innerHTML =
+      `<img src="${_imgData}" style="width:30px;height:30px;border-radius:6px;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(f);
+  document.getElementById('img-area').style.borderColor = 'transparent';
+  document.getElementById('img-txt').textContent = f.name;
+  document.getElementById('img-txt').classList.add('has');
+}
+
+function crearTarea(){
+  const nombre = document.getElementById('t-nombre').value.trim();
+  const dif    = document.getElementById('t-dif').value;
+  const pri    = document.getElementById('t-pri').value;
+  const fecha  = document.getElementById('t-fecha').value;
+  const desc   = document.getElementById('t-desc').value.trim();
+  const imgF   = document.getElementById('t-img').files[0];
+
+  // Validar formato imagen si fue seleccionada
+  if(imgF){
+    const ext = imgF.name.split('.').pop().toLowerCase();
+    if(ext!=='jpg' && ext!=='jpeg'){
+      showModal({ type:'warning', title:'Formato no permitido',
+        sub:'La imagen debe estar en formato JPG para poder subirla.',
+        buttons:[{ label:'Entendido' }] });
+      return;
+    }
+  }
+
+  // ① Nombre vacío
+  if(!nombre){
+    showModal({ type:'warning', title:'Campo obligatorio',
+      sub:'El nombre de la tarea es obligatorio para continuar.',
+      buttons:[{ label:'Entendido', cb:()=>document.getElementById('t-nombre').focus() }] });
+    return;
+  }
+
+  // ② Nombre muy corto
+  if(nombre.length < 3){
+    showModal({ type:'danger', warn:true, title:'Nombre no válido',
+      sub:'El nombre de la tarea debe tener al menos 3 caracteres.',
+      buttons:[{ label:'Cancelar' },{ label:'Corregir', red:true, cb:()=>document.getElementById('t-nombre').focus() }] });
+    return;
+  }
+
+  // ③ Nombre muy largo
+  if(nombre.length > 30){
+    showModal({ type:'danger', warn:true, title:'Nombre no válido',
+      sub:'El nombre de la tarea no puede superar los 30 caracteres.',
+      buttons:[{ label:'Cancelar' },{ label:'Corregir', red:true, cb:()=>document.getElementById('t-nombre').focus() }] });
+    return;
+  }
+
+  // ④ Nombre duplicado (sin distinguir mayúsculas)
+  const duplicada = S.tareas.some(t => t.nombre.toLowerCase() === nombre.toLowerCase());
+  if(duplicada){
+    showModal({ type:'danger', warn:true, title:'Tarea duplicada',
+      sub:`Ya existe una tarea llamada "${nombre}" en el hogar. Por favor elige un nombre diferente.`,
+      buttons:[
+        { label:'Cancelar' },
+        { label:'Corregir', red:true, cb:()=>{
+          document.getElementById('t-nombre').focus();
+          document.getElementById('t-nombre').select();
+        }},
+      ] });
+    return;
+  }
+
+  // ⑤ Dificultad vacía
+  if(!dif){
+    showModal({ type:'warning', title:'Campo obligatorio',
+      sub:'Debes seleccionar una dificultad (Baja, Media o Alta).',
+      buttons:[{ label:'Entendido', cb:()=>document.getElementById('t-dif').focus() }] });
+    return;
+  }
+
+  // ⑥ Prioridad vacía
+  if(!pri){
+    showModal({ type:'warning', title:'Campo obligatorio',
+      sub:'Debes seleccionar una prioridad (Baja, Media o Alta).',
+      buttons:[{ label:'Entendido', cb:()=>document.getElementById('t-pri').focus() }] });
+    return;
+  }
+
+  // ⑦ Fecha vacía
+  if(!fecha){
+    showModal({ type:'warning', title:'Campo obligatorio',
+      sub:'La fecha límite de la tarea es obligatoria.',
+      buttons:[{ label:'Entendido', cb:()=>document.getElementById('t-fecha').focus() }] });
+    return;
+  }
+
+  // ⑧ Fecha anterior a hoy
+  const sel = new Date(fecha+'T00:00:00');
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  if(sel < hoy){
+    showModal({ type:'warning', title:'Fecha no válida',
+      sub:'La fecha límite no puede ser anterior a la fecha actual.',
+      buttons:[{ label:'Corregir', cb:()=>document.getElementById('t-fecha').focus() }] });
+    return;
+  }
+
+  // ✅ Crear tarea
+  S.tareas.push({
+    id: Date.now(), nombre, descripcion: desc,
+    dificultad: dif, prioridad: pri, fecha,
+    hora: document.getElementById('t-hora').value,
+    imagen: imgF ? imgF.name : null,
+    imgData: _imgData || null,
+    estado: 'Pendiente', asignadoA: null,
+  });
+  save();
+
+  // Reset form
+  document.getElementById('t-nombre').value = '';
+  document.getElementById('t-desc').value = '';
+  document.getElementById('t-fecha').value = '';
+  document.getElementById('t-hora').value = '10:30';
+  document.getElementById('t-dif').value = 'Media';
+  document.getElementById('t-pri').value = 'Alta';
+  document.getElementById('t-img').value = '';
+  document.getElementById('img-txt').textContent = 'Subir imagen JPG';
+  document.getElementById('img-txt').classList.remove('has');
+  document.getElementById('img-area').style.borderColor = 'transparent';
+  document.getElementById('img-icon-wrap').innerHTML = '🖼';
+  _imgData = null;
+
+  const listEl = document.getElementById('task-list');
+  if(listEl) listEl.innerHTML = taskListHtml();
+
+  showModal({ type:'success', title:'Tarea creada exitosamente',
+    sub:'La tarea fue agregada al listado del hogar correctamente.',
+    buttons:[{ label:'Ver tareas' }] });
+}
+
+function eliminarTarea(id){
+  showModal({ type:'danger', warn:true, title:'Eliminar tarea',
+    sub:'¿Deseas eliminar esta tarea permanentemente? Esta acción no se puede deshacer.',
+    buttons:[
+      { label:'Cancelar' },
+      { label:'Eliminar', red:true, cb:()=>{ S.tareas=S.tareas.filter(t=>t.id!==id); save(); render(); } }
+    ] });
+}
+
+// ═══════════════════════════════════════
+// PÁGINA: ASIGNAR
+// ═══════════════════════════════════════
+function pgAsignar(){
+  const mListHtml = S.miembros.length ? S.miembros.map(m=>{
+    const cnt = S.tareas.filter(t=>t.asignadoA===m.nombre).length;
+    return `<div class="mitem ${S.selMiembro===m.id?'active':''}" onclick="selMiembro(${m.id})">
+      <div class="avatar" style="background:${m.c.bg};color:${m.c.fg};">${m.ini}</div>
+      <span class="mitem-name">${m.nombre}</span>
+      <div class="mitem-time"><div>${cnt>0?cnt*18+' min':'— min'}</div><div class="mitem-dot"></div></div>
+    </div>`;
+  }).join('') : `<p class="empty">Sin miembros. <button class="btn-ghost" style="display:inline;" onclick="go('miembros')">Agregar →</button></p>`;
+
+  let rightHtml = '';
+  if(S.selMiembro){
+    const m = S.miembros.find(m=>m.id===S.selMiembro);
+    if(m){
+      const asig = S.tareas.filter(t=>t.asignadoA===m.nombre && t.estado==='Asignada');
+      const asigHtml = asig.length ? asig.map(t=>`
+        <div class="aitem">
+          <span class="dot da"></span>
+          <div class="aitem-info"><div class="aitem-name">${t.nombre}</div><div class="aitem-sub">${t.asignadoA} - ${t.dificultad}</div></div>
+          <span class="badge ba">Asignada</span>
+        </div>`).join('') : `<p class="empty" style="padding:.5rem 0;">Sin tareas asignadas.</p>`;
+      const sinAsig = S.tareas.filter(t=>t.estado==='Pendiente' && !t.asignadoA);
+      const sinHtml = sinAsig.length ? `
+        <h3 style="font-size:14px;font-weight:600;color:var(--muted);margin:1.5rem 0 .75rem;">Tareas sin asignar</h3>
+        ${sinAsig.map(t=>`<div class="aitem"><span class="dot di"></span><div class="aitem-info"><div class="aitem-name">${t.nombre}</div></div><span class="badge bp">Pendiente</span></div>`).join('')}` : '';
+      rightHtml = `<h3 style="font-size:15px;font-weight:600;margin-bottom:1rem;">${m.nombre} — Tareas asignadas</h3>${asigHtml}${sinHtml}`;
+    }
+  } else {
+    const sinAsig = S.tareas.filter(t=>t.estado==='Pendiente');
+    rightHtml = `<h3 style="font-size:15px;font-weight:600;margin-bottom:1rem;">Tareas sin asignar</h3>
+      ${sinAsig.length ? sinAsig.map(t=>`<div class="aitem"><span class="dot di"></span><div class="aitem-info"><div class="aitem-name">${t.nombre}</div></div><span class="badge bp">Pendiente</span></div>`).join('') : '<p class="empty">No hay tareas pendientes.</p>'}`;
+  }
+
+  return `
+  <div class="two-panel">
+    <div class="panel-l">
+      <button class="btn-ghost" onclick="go('inicio')">← Volver</button>
+      <div style="margin:1rem 0;">
+        <button class="btn-yellow" onclick="asignarAleatorio()">Asignar tareas semanales</button>
+        <p style="color:var(--muted);font-size:12px;margin-top:6px;">Selecciona un miembro para ver su carga semanal</p>
+      </div>
+      <div>${mListHtml}</div>
+    </div>
+    <div class="panel-r">${rightHtml}</div>
+  </div>`;
+}
+
+function selMiembro(id){ S.selMiembro = (S.selMiembro===id ? null : id); render(); }
+
+function asignarAleatorio(){
+  if(S.lastWeek === getWeek()){
+    showModal({ type:'warning', title:'Asignación no disponible',
+      sub:'Las tareas ya fueron asignadas esta semana. Vuelve el próximo lunes.',
+      buttons:[{ label:'Entendido' }] });
+    return;
+  }
+  const pendientes = S.tareas.filter(t=>t.estado==='Pendiente');
+  if(!pendientes.length){
+    showModal({ type:'warning', title:'Sin tareas',
+      sub:'No hay tareas pendientes para asignar en este momento.',
+      buttons:[{ label:'Entendido' }] });
+    return;
+  }
+  if(!S.miembros.length){
+    showModal({ type:'danger', warn:true, title:'Sin miembros',
+      sub:'Agrega miembros al hogar antes de asignar tareas.',
+      buttons:[{ label:'Ir a miembros', cb:()=>go('miembros') }] });
+    return;
+  }
+
+  const sorted = [...pendientes].sort((a,b)=>(DIF_SCORE[b.dificultad]||1)-(DIF_SCORE[a.dificultad]||1));
+  const load = {}; S.miembros.forEach(m=>{ load[m.id]=0; });
+  let cnt = 0;
+  sorted.forEach(tarea=>{
+    const chosen = S.miembros.reduce((a,b)=>load[a.id]<=load[b.id]?a:b);
+    const idx = S.tareas.findIndex(t=>t.id===tarea.id);
+    S.tareas[idx].estado = 'Asignada';
+    S.tareas[idx].asignadoA = chosen.nombre;
+    load[chosen.id] += (DIF_SCORE[tarea.dificultad]||1);
+    cnt++;
+  });
+  S.lastWeek = getWeek();
+  save();
+
+  showModal({ type:'success', title:'¡Tareas asignadas!',
+    sub:`Se asignaron ${cnt} tarea${cnt!==1?'s':''} correctamente entre los miembros del hogar.`,
+    buttons:[{ label:'Ver asignaciones', cb:()=>render() }] });
+}
+
+// ═══════════════════════════════════════
+// PÁGINA: MIEMBROS
+// ═══════════════════════════════════════
+function pgMiembros(){
+  const mHtml = S.miembros.length ? S.miembros.map((m,i)=>`
+    <div class="mcard">
+      <div class="avatar avatar-lg" style="background:${m.c.bg};color:${m.c.fg};">${m.ini}</div>
+      <div class="mcard-info">
+        <div class="mcard-name">${m.nombre}</div>
+        <div class="mcard-role">${m.rol||'Miembro'} · ${S.tareas.filter(t=>t.asignadoA===m.nombre).length} tarea(s)</div>
+      </div>
+      ${m.ini!=='DL' ? `<button class="mcard-rm" onclick="rmMiembro(${i})">Eliminar</button>` : '<span style="font-size:11px;color:var(--yellow);">Admin</span>'}
+    </div>`).join('') : `<p class="empty">No hay miembros aún.</p>`;
+
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+      <h2 style="font-family:'Hammersmith One',sans-serif;font-size:22px;">Miembros del hogar</h2>
+      <button class="btn-yellow" style="max-width:180px;" onclick="openAddMember()">+ Agregar</button>
+    </div>
+    <div>${mHtml}</div>`;
+}
+
+function rmMiembro(i){
+  const m = S.miembros[i];
+  if(m.ini==='DL'){
+    showModal({ type:'warning', title:'Acción no permitida',
+      sub:'No puedes eliminarte a ti mismo del hogar.',
+      buttons:[{ label:'Entendido' }] });
+    return;
+  }
+  showModal({ type:'danger', warn:true, title:'Eliminar miembro',
+    sub:`¿Deseas eliminar a "${m.nombre}" del hogar? Sus tareas volverán a "Pendiente".`,
+    buttons:[
+      { label:'Cancelar' },
+      { label:'Eliminar', red:true, cb:()=>{
+        S.tareas.forEach(t=>{ if(t.asignadoA===m.nombre){ t.asignadoA=null; t.estado='Pendiente'; } });
+        S.miembros.splice(i,1); save(); render();
+      }},
+    ] });
+}
+
+// ═══════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════
+load();
+if(!S.hogar) S.page='hogar';
+render();
+</script>
+</body>
+</html>
